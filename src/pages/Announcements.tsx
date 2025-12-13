@@ -34,7 +34,7 @@ export function Announcements() {
             </div>
             <p className="line-height-3 text-color-secondary mb-3">{item.body}</p>
             <div className="flex align-items-center gap-2 pt-2 border-top-1 surface-border">
-                <Avatar icon="pi pi-user" shape="circle" size="small" />
+                <Avatar icon="pi pi-user" shape="circle" size="normal" />
                 <span className="text-color-secondary text-sm">{(item as any).profile?.name || 'Admin'}</span>
             </div>
         </Card>

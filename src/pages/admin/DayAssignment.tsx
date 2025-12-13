@@ -12,10 +12,8 @@ export function DayAssignment() {
     const { submissions } = useBottleSubmissions(selectedEventId)
     const { days, updateDay } = useCalendarDays(selectedEventId)
     const toast = useRef<Toast>(null)
-    const [saving, setSaving] = useState(false)
 
     const eventOptions = events.map(e => ({ label: `${e.name} (${e.year})`, value: e.id }))
-    const dayOptions = Array.from({ length: 24 }, (_, i) => ({ label: `Day ${i + 1}`, value: i + 1 }))
 
     // Auto-select first event
     useEffect(() => {

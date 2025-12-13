@@ -8,7 +8,6 @@ import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
 import { InputNumber } from 'primereact/inputnumber'
 import { InputTextarea } from 'primereact/inputtextarea'
-import { Dropdown } from 'primereact/dropdown'
 import { Toast } from 'primereact/toast'
 import { AppLayout } from '../components/layout'
 import { useAuth } from '../context'
@@ -23,20 +22,9 @@ export function History() {
     const toast = useRef<Toast>(null)
 
     const [editingEvent, setEditingEvent] = useState<Event | null>(null)
-    const [editingBottle, setEditingBottle] = useState<BottleSubmission | null>(null)
     const [showEventDialog, setShowEventDialog] = useState(false)
-    const [showBottleDialog, setShowBottleDialog] = useState(false)
 
     const [eventForm, setEventForm] = useState({ name: '', description: '' })
-    const [bottleForm, setBottleForm] = useState({
-        whiskey_name: '',
-        distillery: '',
-        country: '',
-        style: '',
-        abv: null as number | null,
-        price: null as number | null,
-        notes: ''
-    })
 
     // Filter to show only completed/past events
     const pastEvents = events.filter(e => e.year < CURRENT_YEAR || e.status === 'completed')
@@ -57,13 +45,6 @@ export function History() {
             toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update event' })
         }
     }
-
-    const ratingTemplate = (value: number) => (
-        <span className="flex align-items-center gap-1 text-primary font-bold">
-            <i className="pi pi-star-fill" />
-            {value?.toFixed(1) || 'N/A'}
-        </span>
-    )
 
     return (
         <AppLayout>

@@ -27,7 +27,7 @@ export function DayDetail() {
 
     // Hooks for comments and tasting entry
     const { comments, loading: commentsLoading, createComment } = useComments(day?.id)
-    const { entry, loading: entryLoading, saveEntry } = useTastingEntry(day?.id, user?.id)
+    const { entry, saveEntry } = useTastingEntry(day?.id, user?.id)
 
     // Local state for form
     const [rating, setRating] = useState<number | undefined>(undefined)

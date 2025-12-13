@@ -20,7 +20,7 @@ export function Login() {
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
 
-    const { user, profile, loading, signInWithEmail, signUpWithEmail, signInWithProvider, isConfigured } = useAuth()
+    const { user, loading, signInWithEmail, signUpWithEmail, signInWithProvider, isConfigured } = useAuth()
     const navigate = useNavigate()
     const location = useLocation()
 
