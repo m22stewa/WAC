@@ -1,0 +1,28 @@
+# Node
+node_modules/
+
+# Vite
+dist/
+
+# Editor
+.vscode/
+.DS_Store
+
+# Env
+.env.local
+.env
+.env.*
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+**/npm-debug.log*
+
+# Build
+build/
+
+# Misc
+.idea/
+coverage/
