@@ -15,6 +15,7 @@ import { EventManagement } from './pages/admin/EventManagement'
 import { DayAssignment } from './pages/admin/DayAssignment'
 import { MemberManagement } from './pages/admin/MemberManagement'
 import { AnnouncementEditor } from './pages/admin/AnnouncementEditor'
+import { BottleManagement } from './pages/admin/BottleManagement'
 
 function App() {
     return (
@@ -90,6 +91,12 @@ function App() {
                     <Route path="/admin/announcements" element={
                         <ProtectedRoute requireAdmin>
                             <AnnouncementEditor />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/admin/bottles" element={
+                        <ProtectedRoute requireAdmin>
+                            <BottleManagement />
                         </ProtectedRoute>
                     } />
                 </Routes>

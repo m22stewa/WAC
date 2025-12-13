@@ -60,6 +60,11 @@ export function Navbar() {
                     command: () => navigate('/admin/days')
                 },
                 {
+                    label: 'Manage Bottles',
+                    icon: 'pi pi-box',
+                    command: () => navigate('/admin/bottles')
+                },
+                {
                     label: 'Members',
                     icon: 'pi pi-users',
                     command: () => navigate('/admin/members')

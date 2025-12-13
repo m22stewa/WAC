@@ -1,23 +1,55 @@
 import { Card } from 'primereact/card'
 import { Button } from 'primereact/button'
+import { ProgressSpinner } from 'primereact/progressspinner'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context'
 import { AppLayout } from '../components/layout'
+import { useCurrentEvent, useCalendarDays } from '../hooks'
 
 const CURRENT_YEAR = new Date().getFullYear()
-
-// Placeholder calendar data for demo
-const calendarDays = Array.from({ length: 24 }, (_, i) => ({
-    day: i + 1,
-    isRevealed: i < new Date().getDate() && new Date().getMonth() === 11,
-    isToday: i + 1 === new Date().getDate() && new Date().getMonth() === 11
-}))
 
 export function Dashboard() {
     const { profile } = useAuth()
     const navigate = useNavigate()
     const currentMonth = new Date().getMonth()
     const isDecember = currentMonth === 11
+
+    const { event, loading: eventLoading } = useCurrentEvent()
+    const { days, loading: daysLoading } = useCalendarDays(event?.id)
+
+    const today = new Date()
+    const todayStr = today.toISOString().split('T')[0] // YYYY-MM-DD format
+
+    // Build calendar days from real data, or fallback to empty structure
+    const calendarDays = days.length > 0
+        ? days.map(day => {
+            // A day is revealed if is_revealed is true OR if the reveal_date has passed
+            const revealDatePassed = day.reveal_date && day.reveal_date <= todayStr
+            return {
+                day: day.day_number,
+                isRevealed: day.is_revealed || revealDatePassed,
+                isToday: day.day_number === today.getDate() && isDecember,
+                hasBottle: !!day.bottle_submission_id
+            }
+        })
+        : Array.from({ length: 24 }, (_, i) => ({
+            day: i + 1,
+            isRevealed: false,
+            isToday: i + 1 === today.getDate() && isDecember,
+            hasBottle: false
+        }))
+
+    const loading = eventLoading || daysLoading
+
+    if (loading) {
+        return (
+            <AppLayout>
+                <div className="flex align-items-center justify-content-center" style={{ minHeight: '50vh' }}>
+                    <ProgressSpinner style={{ width: '50px', height: '50px' }} />
+                </div>
+            </AppLayout>
+        )
+    }
 
     return (
         <AppLayout>

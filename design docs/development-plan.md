@@ -356,3 +356,91 @@ Use **PrimeReact** as the primary React UI component library for all major UI el
 - Simple deployment: Allow the AI tool to choose the deployment stack, but it should be practical for a small private group (e.g., a single backend service plus managed database)  
 - App should be responsive and mobile‑friendly  
 - Include minimal test coverage (unit/integration smoke tests) for critical flows if the AI tool supports generating tests
+---
+
+## Implementation Status
+
+This section tracks the current implementation status of the app.
+
+### Tech Stack (Implemented)
+
+- **Frontend**: React 18 + TypeScript + Vite
+- **UI Library**: PrimeReact + PrimeFlex + PrimeIcons
+- **Backend**: Supabase (Auth, PostgreSQL Database, Row Level Security)
+- **Mobile**: Progressive Web App (PWA) via vite-plugin-pwa
+- **Deployment**: Vercel (recommended)
+
+### Implemented Features
+
+#### Authentication & Authorization ✅
+- Email/password authentication
+- Social login support (Google, Apple, Facebook) via Supabase Auth
+- Auto-redirect for logged-in users visiting login page
+- Protected routes with role-based access control
+- Profile auto-creation on first login
+
+#### Dashboard & Calendar ✅
+- Advent calendar grid showing days 1-24
+- Real-time data from Supabase (no dummy data)
+- Auto-reveal based on `reveal_date` field (days unlock automatically)
+- Manual reveal override by admin
+- Visual indicators for today, revealed, and locked days
+
+#### Bottle Submissions ✅
+- User bottle submission form with full details
+- Admin Bottle Management page (`/admin/bottles`)
+  - View all submissions for any event
+  - Edit any user's bottle
+  - Create bottles on behalf of users who haven't submitted
+
+#### Day Detail Page ✅
+- Whiskey details display (name, distillery, country, style, ABV, price, notes)
+- Comments section with real-time posting
+- Tasting notes form (rating 1-10, notes, would-buy-again)
+- Proper empty states for unrevealed/unassigned days
+
+#### Announcements ✅
+- Real-time announcements fetched from database
+- Admin announcement editor with create/edit/delete
+- Timeline display on announcements page
+
+#### Admin Features ✅
+- Event Management - create and manage yearly events
+- Day Assignment - assign bottles to calendar days, toggle reveals
+- Member Management - view users, change roles
+- Bottle Management - edit/create bottles for any user
+- Announcement Editor - post event updates
+
+#### Data Hooks (Custom React Hooks) ✅
+- `useEvents` - CRUD for events
+- `useCurrentEvent` - get current year's event
+- `useAnnouncements` - CRUD for announcements
+- `useBottleSubmissions` - CRUD for bottle submissions
+- `useCalendarDays` - manage calendar days and assignments
+- `useEventMemberships` - manage event members
+- `useUsers` - admin user management
+- `useComments` - CRUD for day comments
+- `useTastingEntry` - save/load user tasting notes
+
+### Database Schema
+
+Located in `supabase/migrations/`:
+- `001_initial_schema.sql` - Core tables (profiles, events, bottles, calendar days, etc.)
+- `002_simplified_rls.sql` - Row Level Security policies
+
+### Pending Features
+
+- [ ] Settle Up calculations (UI exists, needs real data integration)
+- [ ] History page (past events browsing)
+- [ ] Push notifications for new reveals/announcements
+- [ ] AI bottle suggestion feature
+- [ ] Email notifications
+
+### Deployment
+
+The app is deployed to **Vercel** with the following configuration:
+- Build command: `npm run build`
+- Output directory: `dist`
+- Environment variables configured in Vercel dashboard:
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`

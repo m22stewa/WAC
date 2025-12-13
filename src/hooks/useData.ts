@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { Event, BottleSubmission, CalendarDay, Announcement, Profile, EventMembership } from '../types'
+import { Event, BottleSubmission, CalendarDay, Announcement, Profile, EventMembership, Comment, TastingEntry } from '../types'
 
 // Hook for fetching events
 export function useEvents() {
@@ -383,3 +383,138 @@ export function useCurrentEvent() {
 
     return { event, loading }
 }
+
+// Hook for comments on a calendar day
+export function useComments(calendarDayId?: string) {
+    const [comments, setComments] = useState<Comment[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+
+    const fetchComments = async () => {
+        if (!calendarDayId) {
+            setLoading(false)
+            return
+        }
+        setLoading(true)
+        setError(null)
+
+        const { data, error } = await supabase
+            .from('comments')
+            .select('*, profile:profiles(name, avatar_url)')
+            .eq('calendar_day_id', calendarDayId)
+            .order('created_at', { ascending: true })
+
+        if (error) {
+            console.error('Error fetching comments:', error)
+            setError(error.message)
+        } else {
+            console.log('Fetched comments:', data)
+        }
+
+        setComments(data || [])
+        setLoading(false)
+    }
+
+    useEffect(() => {
+        fetchComments()
+    }, [calendarDayId])
+
+    const createComment = async (content: string, userId: string) => {
+        if (!calendarDayId) return
+        const { data, error } = await supabase
+            .from('comments')
+            .insert({ calendar_day_id: calendarDayId, user_id: userId, content })
+            .select('*, profile:profiles(name, avatar_url)')
+            .single()
+        if (error) {
+            console.error('Error creating comment:', error)
+            throw error
+        }
+        setComments(prev => [...prev, data])
+        return data
+    }
+
+    const deleteComment = async (id: string) => {
+        const { error } = await supabase.from('comments').delete().eq('id', id)
+        if (error) {
+            console.error('Error deleting comment:', error)
+            throw error
+        }
+        setComments(prev => prev.filter(c => c.id !== id))
+    }
+
+    return { comments, loading, error, fetchComments, createComment, deleteComment }
+}
+
+// Hook for tasting entry on a calendar day for a specific user
+export function useTastingEntry(calendarDayId?: string, userId?: string) {
+    const [entry, setEntry] = useState<TastingEntry | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+
+    const fetchEntry = async () => {
+        if (!calendarDayId || !userId) {
+            setLoading(false)
+            return
+        }
+        setLoading(true)
+        setError(null)
+
+        const { data, error } = await supabase
+            .from('tasting_entries')
+            .select('*')
+            .eq('calendar_day_id', calendarDayId)
+            .eq('user_id', userId)
+            .maybeSingle()
+
+        if (error) {
+            console.error('Error fetching tasting entry:', error)
+            setError(error.message)
+        } else {
+            console.log('Fetched tasting entry:', data)
+        }
+
+        setEntry(data || null)
+        setLoading(false)
+    }
+
+    useEffect(() => {
+        fetchEntry()
+    }, [calendarDayId, userId])
+
+    const saveEntry = async (updates: { rating?: number | null; tasting_notes?: string | null; would_buy_again?: boolean | null }) => {
+        if (!calendarDayId || !userId) return
+
+        if (entry) {
+            // Update existing
+            const { data, error } = await supabase
+                .from('tasting_entries')
+                .update({ ...updates, updated_at: new Date().toISOString() })
+                .eq('id', entry.id)
+                .select()
+                .single()
+            if (error) {
+                console.error('Error updating tasting entry:', error)
+                throw error
+            }
+            setEntry(data)
+            return data
+        } else {
+            // Create new
+            const { data, error } = await supabase
+                .from('tasting_entries')
+                .insert({ calendar_day_id: calendarDayId, user_id: userId, ...updates })
+                .select()
+                .single()
+            if (error) {
+                console.error('Error creating tasting entry:', error)
+                throw error
+            }
+            setEntry(data)
+            return data
+        }
+    }
+
+    return { entry, loading, error, fetchEntry, saveEntry }
+}
+
