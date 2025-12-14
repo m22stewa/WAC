@@ -10,6 +10,9 @@ import 'primereact/resources/primereact.min.css'
 import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'
 
+// Custom styles (fonts and theme)
+import './index.css'
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <PrimeReactProvider>

@@ -6,6 +6,7 @@ import { Avatar } from 'primereact/avatar'
 import { Menu } from 'primereact/menu'
 import { useAuth, useTheme } from '../../context'
 import { MenuItem } from 'primereact/menuitem'
+import wacIcon from '../../wac-icon.png'
 
 export function Navbar() {
     const { user, profile, isAdmin, signOut } = useAuth()
@@ -90,7 +91,7 @@ export function Navbar() {
 
     const start = (
         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontWeight: 'bold', fontSize: '1.25rem', color: 'var(--primary-color)' }}>WAC</span>
+            <img src={wacIcon} alt="WAC" style={{ height: '2.5rem', width: 'auto' }} />
         </Link>
     )
 
