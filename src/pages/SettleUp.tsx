@@ -41,7 +41,7 @@ export function SettleUp() {
     return (
         <AppLayout>
             <div className="max-w-4xl mx-auto">
-                <h1 className="mb-2">💰 Settle Up</h1>
+                <h1 className="mb-2">Settle Up</h1>
                 <p className="text-color-secondary mb-4">{CURRENT_YEAR} Advent Calendar spending overview</p>
 
                 {/* Summary Cards */}

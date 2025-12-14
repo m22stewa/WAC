@@ -104,7 +104,6 @@ export function Navbar() {
 
     const start = (
         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.5rem' }}>🥃</span>
             <span style={{ fontWeight: 'bold', fontSize: '1.25rem', color: 'var(--primary-color)' }}>WAC</span>
         </Link>
     )

@@ -59,7 +59,7 @@ export function Dashboard() {
                 </h1>
                 <p className="text-color-secondary mb-4">
                     {isDecember
-                        ? "It's the most wonderful time of the year! 🎄"
+                        ? "It's the most wonderful time of the year!"
                         : "The countdown to whiskey season begins soon!"}
                 </p>
 
@@ -118,7 +118,7 @@ export function Dashboard() {
                 </div>
 
                 {/* Advent Calendar Grid */}
-                <h2 className="mb-3">🗓️ Advent Calendar {CURRENT_YEAR}</h2>
+                <h2 className="mb-3">Advent Calendar {CURRENT_YEAR}</h2>
                 <div className="grid">
                     {calendarDays.map(({ day, isRevealed, isToday }) => (
                         <div key={day} className="col-6 sm:col-4 md:col-2">

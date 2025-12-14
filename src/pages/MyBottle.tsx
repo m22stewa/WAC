@@ -130,7 +130,7 @@ export function MyBottle() {
         return (
             <AppLayout>
                 <div className="max-w-3xl mx-auto">
-                    <h1 className="mb-2">🥃 My Bottle Submission</h1>
+                    <h1 className="mb-2">My Bottle Submission</h1>
                     <Message
                         severity="warn"
                         text={`No calendar event found for ${CURRENT_YEAR}. An admin needs to create one first.`}
@@ -145,7 +145,7 @@ export function MyBottle() {
         <AppLayout>
             <Toast ref={toast} />
             <div className="max-w-3xl mx-auto">
-                <h1 className="mb-2">🥃 My Bottle Submission</h1>
+                <h1 className="mb-2">My Bottle Submission</h1>
                 <p className="text-color-secondary mb-4">Submit your whiskey for the {CURRENT_YEAR} Advent Calendar</p>
 
                 {error && (

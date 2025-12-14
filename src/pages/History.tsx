@@ -51,12 +51,12 @@ export function History() {
             <Toast ref={toast} />
 
             <div className="max-w-4xl mx-auto">
-                <h1 className="mb-2">📚 History</h1>
+                <h1 className="mb-2">History</h1>
                 <p className="text-color-secondary mb-4">Look back at past Advent calendars</p>
 
                 {pastEvents.length === 0 ? (
                     <Card className="text-center p-5">
-                        <div className="text-4xl mb-3">📦</div>
+                        <div className="text-4xl mb-3"><i className="pi pi-archive" /></div>
                         <h3>No History Yet</h3>
                         <p className="text-color-secondary">Past events will appear here once completed.</p>
                     </Card>
@@ -172,6 +172,11 @@ function HistoryEventBottles({ eventId, isAdmin }: { eventId: string; isAdmin: b
             <DataTable value={submissions} stripedRows responsiveLayout="scroll" emptyMessage="No bottles recorded.">
                 <Column field="whiskey_name" header="Whiskey" sortable />
                 <Column field="distillery" header="Distillery" />
+                <Column 
+                    header="Bought By" 
+                    body={(row) => (row as any).profile?.name || 'Unknown'} 
+                    sortable 
+                />
                 <Column field="country" header="Country" />
                 <Column field="price" header="Price" body={(row) => row.price ? `$${row.price}` : '-'} />
                 {isAdmin && <Column header="" body={actionsTemplate} style={{ width: '60px' }} />}

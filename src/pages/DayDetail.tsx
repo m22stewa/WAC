@@ -157,7 +157,6 @@ export function DayDetail() {
                         {/* Whiskey Details */}
                         <Card className="mb-4">
                             <div className="flex align-items-center gap-4 mb-3">
-                                <span className="text-5xl">🥃</span>
                                 <div className="flex flex-wrap gap-3">
                                     {bottle.country && <span><i className="pi pi-map-marker mr-1" />{bottle.country}</span>}
                                     {bottle.style && <span><i className="pi pi-tag mr-1" />{bottle.style}</span>}

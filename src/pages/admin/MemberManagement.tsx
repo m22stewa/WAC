@@ -60,7 +60,7 @@ export function MemberManagement() {
 
     const roleTemplate = (row: Profile) => (
         <Tag
-            value={row.role === 'admin' ? '👑 Admin' : '🥃 Member'}
+            value={row.role === 'admin' ? 'Admin' : 'Member'}
             severity={row.role === 'admin' ? 'warning' : 'info'}
         />
     )
@@ -89,7 +89,7 @@ export function MemberManagement() {
 
             <div className="max-w-5xl mx-auto">
                 <div className="mb-4">
-                    <h1 className="m-0 mb-1">👥 User Management</h1>
+                    <h1 className="m-0 mb-1">User Management</h1>
                     <p className="text-color-secondary m-0">View all users and manage their roles</p>
                 </div>
 

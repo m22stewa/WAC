@@ -53,7 +53,7 @@ export function Announcements() {
     return (
         <AppLayout>
             <div className="max-w-3xl mx-auto">
-                <h1 className="mb-2">📢 Announcements</h1>
+                <h1 className="mb-2">Announcements</h1>
                 <p className="text-color-secondary mb-4">Updates and news from the organizers</p>
 
                 {announcements.length === 0 ? (

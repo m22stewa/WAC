@@ -41,7 +41,7 @@ export function Profile() {
                                     <p className="text-color-secondary m-0 mb-2">{profile?.email}</p>
                                     <span className={`px-2 py-1 border-round text-sm font-bold ${profile?.role === 'admin' ? 'bg-yellow-100 text-yellow-800' : 'surface-200'
                                         }`}>
-                                        {profile?.role === 'admin' ? '👑 Admin' : '🥃 Member'}
+                                        {profile?.role === 'admin' ? 'Admin' : 'Member'}
                                     </span>
                                 </div>
                             </div>

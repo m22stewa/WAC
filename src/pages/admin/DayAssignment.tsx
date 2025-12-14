@@ -53,7 +53,7 @@ export function DayAssignment() {
             <Toast ref={toast} />
 
             <div className="max-w-5xl mx-auto">
-                <h1 className="mb-1">📆 Day Assignment</h1>
+                <h1 className="mb-1">Day Assignment</h1>
                 <p className="text-color-secondary mb-4">Assign bottles to calendar days and control reveals</p>
 
                 <Card className="mb-4">

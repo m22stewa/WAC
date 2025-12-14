@@ -8,6 +8,7 @@ import { Divider } from 'primereact/divider'
 import { Message } from 'primereact/message'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { useAuth } from '../context'
+import { supabase } from '../lib/supabase'
 
 type AuthMode = 'login' | 'signup'
 
@@ -19,6 +20,7 @@ export function Login() {
     const [formLoading, setFormLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
+    const [resendingEmail, setResendingEmail] = useState(false)
 
     const { user, loading, signInWithEmail, signUpWithEmail, signInWithProvider, isConfigured } = useAuth()
     const navigate = useNavigate()
@@ -64,6 +66,34 @@ export function Login() {
         const { error } = await signInWithProvider(provider)
         if (error) {
             setError(error.message)
+        }
+    }
+
+    const handleResendVerification = async () => {
+        if (!email) {
+            setError('Please enter your email address')
+            return
+        }
+
+        setResendingEmail(true)
+        setError(null)
+        setSuccess(null)
+
+        try {
+            const { error } = await supabase.auth.resend({
+                type: 'signup',
+                email: email,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/auth/callback`
+                }
+            })
+
+            if (error) throw error
+            setSuccess('Verification email sent! Check your inbox.')
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to send verification email')
+        } finally {
+            setResendingEmail(false)
         }
     }
 
@@ -182,6 +212,18 @@ export function Login() {
                         disabled={formLoading}
                     />
                 </form>
+
+                {mode === 'login' && (
+                    <div className="text-center mt-2">
+                        <Button
+                            label="Resend Verification Email"
+                            icon={resendingEmail ? 'pi pi-spin pi-spinner' : 'pi pi-envelope'}
+                            className="p-button-text p-button-sm"
+                            onClick={handleResendVerification}
+                            disabled={resendingEmail || !email}
+                        />
+                    </div>
+                )}
 
                 <Divider align="center">
                     <span className="text-color-secondary text-sm">or continue with</span>

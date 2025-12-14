@@ -99,8 +99,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(session?.user ?? null)
 
             if (session?.user) {
-                const profile = await fetchOrCreateProfile(session.user)
-                if (mounted) setProfile(profile)
+                try {
+                    const profile = await fetchOrCreateProfile(session.user)
+                    if (mounted) setProfile(profile)
+                } catch (error) {
+                    console.error('Failed to fetch/create profile:', error)
+                    if (mounted) setProfile(null)
+                }
             }
 
             if (mounted) setLoading(false)
@@ -116,8 +121,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(session?.user ?? null)
 
                 if (session?.user) {
-                    const profile = await fetchOrCreateProfile(session.user)
-                    if (mounted) setProfile(profile)
+                    try {
+                        const profile = await fetchOrCreateProfile(session.user)
+                        if (mounted) setProfile(profile)
+                    } catch (error) {
+                        console.error('Failed to fetch/create profile:', error)
+                        if (mounted) setProfile(null)
+                    }
                 } else {
                     setProfile(null)
                 }
@@ -147,7 +157,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email,
             password,
             options: {
-                data: { name }
+                data: { name },
+                emailRedirectTo: `${window.location.origin}/auth/callback`
             }
         })
         return { error }

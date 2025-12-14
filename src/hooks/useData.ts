@@ -29,6 +29,7 @@ export function useEvents() {
 
     useEffect(() => {
         fetchEvents()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const createEvent = async (event: Partial<Event>) => {
@@ -101,6 +102,7 @@ export function useAnnouncements(eventId?: string) {
 
     useEffect(() => {
         fetchAnnouncements()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [eventId])
 
     const createAnnouncement = async (announcement: Partial<Announcement>) => {
@@ -161,6 +163,7 @@ export function useUsers() {
 
     useEffect(() => {
         fetchUsers()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const updateUserRole = async (userId: string, role: 'user' | 'admin') => {
@@ -209,6 +212,7 @@ export function useBottleSubmissions(eventId?: string) {
 
     useEffect(() => {
         fetchSubmissions()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [eventId])
 
     const createSubmission = async (submission: Partial<BottleSubmission>) => {
@@ -268,6 +272,7 @@ export function useCalendarDays(eventId?: string) {
 
     useEffect(() => {
         fetchDays()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [eventId])
 
     const updateDay = async (id: string, updates: Partial<CalendarDay>) => {
@@ -326,6 +331,7 @@ export function useEventMemberships(eventId?: string) {
 
     useEffect(() => {
         fetchMemberships()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [eventId])
 
     const addMember = async (userId: string) => {
@@ -417,6 +423,7 @@ export function useComments(calendarDayId?: string) {
 
     useEffect(() => {
         fetchComments()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [calendarDayId])
 
     const createComment = async (content: string, userId: string) => {
@@ -480,6 +487,7 @@ export function useTastingEntry(calendarDayId?: string, userId?: string) {
 
     useEffect(() => {
         fetchEntry()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [calendarDayId, userId])
 
     const saveEntry = async (updates: { rating?: number | null; tasting_notes?: string | null; would_buy_again?: boolean | null }) => {

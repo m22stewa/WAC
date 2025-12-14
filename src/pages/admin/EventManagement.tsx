@@ -136,7 +136,7 @@ export function EventManagement() {
             <div className="max-w-5xl mx-auto">
                 <div className="flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
                     <div>
-                        <h1 className="m-0 mb-1">📅 Event Management</h1>
+                        <h1 className="m-0 mb-1">Event Management</h1>
                         <p className="text-color-secondary m-0">Create and manage Advent calendar events</p>
                     </div>
                     <Button label="New Event" icon="pi pi-plus" onClick={openCreateDialog} />

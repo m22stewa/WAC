@@ -17,12 +17,12 @@ export function AppLayout({ children, showNavbar = true }: AppLayoutProps) {
 
             {showNavbar && <Navbar />}
 
-            <main className="p-4">
+            <main className="p-4 max-w-screen-2xl mx-auto">
                 {children}
             </main>
 
             <footer className="p-4 text-center text-color-secondary border-top-1 surface-border mt-4">
-                <p className="m-0">🥃 Whiskey Advent Calendar</p>
+                <p className="m-0">Whiskey Advent Calendar</p>
             </footer>
         </div>
     )

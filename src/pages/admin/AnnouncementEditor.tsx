@@ -117,7 +117,7 @@ export function AnnouncementEditor() {
             <div className="max-w-5xl mx-auto">
                 <div className="flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
                     <div>
-                        <h1 className="m-0 mb-1">📝 Announcement Management</h1>
+                        <h1 className="m-0 mb-1">Announcement Management</h1>
                         <p className="text-color-secondary m-0">Create and manage announcements for events</p>
                     </div>
                     <Button label="New Announcement" icon="pi pi-plus" onClick={openCreateDialog} disabled={!selectedEventId} />

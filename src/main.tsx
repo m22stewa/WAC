@@ -3,9 +3,9 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 
-// PrimeReact imports - Light theme by default
+// PrimeReact imports - Mira theme
 import { PrimeReactProvider } from 'primereact/api'
-import 'primereact/resources/themes/lara-light-indigo/theme.css'
+import 'primereact/resources/themes/mira/theme.css'
 import 'primereact/resources/primereact.min.css'
 import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'

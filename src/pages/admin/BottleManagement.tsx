@@ -64,12 +64,8 @@ export function BottleManagement() {
 
     const eventOptions = events.map(e => ({ label: `${e.name} (${e.year})`, value: e.id }))
     
-    // Filter out users who already have a submission for this event (unless editing that user)
-    const usersWithoutSubmission = users.filter(u => 
-        !submissions.some(s => s.user_id === u.id) || 
-        (editingSubmission && editingSubmission.user_id === u.id)
-    )
-    const userOptions = usersWithoutSubmission.map(u => ({ 
+    // All users are available for selection
+    const userOptions = users.map(u => ({ 
         label: `${u.name || 'Unnamed'} (${u.email})`, 
         value: u.id 
     }))
@@ -118,20 +114,23 @@ export function BottleManagement() {
         setSaving(true)
         try {
             if (editingSubmission) {
-                await updateSubmission(editingSubmission.id, formData)
+                await updateSubmission(editingSubmission.id, {
+                    ...formData,
+                    user_id: selectedUserId || null
+                })
                 toast.current?.show({ severity: 'success', summary: 'Success', detail: 'Bottle updated' })
             } else {
-                if (!selectedUserId || !selectedEventId) {
-                    toast.current?.show({ severity: 'warn', summary: 'Required', detail: 'Please select a user' })
+                if (!selectedEventId) {
+                    toast.current?.show({ severity: 'warn', summary: 'Required', detail: 'Event is required' })
                     setSaving(false)
                     return
                 }
                 await createSubmission({
                     event_id: selectedEventId,
-                    user_id: selectedUserId,
+                    user_id: selectedUserId || null,
                     ...formData
                 })
-                toast.current?.show({ severity: 'success', summary: 'Success', detail: 'Bottle created for user' })
+                toast.current?.show({ severity: 'success', summary: 'Success', detail: 'Bottle created' })
             }
             setShowDialog(false)
             resetForm()
@@ -188,7 +187,7 @@ export function BottleManagement() {
             <div className="max-w-6xl mx-auto">
                 <div className="flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
                     <div>
-                        <h1 className="m-0 mb-1">🍾 Bottle Management</h1>
+                        <h1 className="m-0 mb-1">Bottle Management</h1>
                         <p className="text-color-secondary m-0">View and manage all bottle submissions</p>
                     </div>
                     <Button 
@@ -237,21 +236,23 @@ export function BottleManagement() {
                     className="p-fluid"
                 >
                     <div className="flex flex-column gap-3 pt-3">
-                        {!editingSubmission && (
-                            <div className="field">
-                                <label htmlFor="userSelect" className="block mb-2 font-medium">Select User *</label>
-                                <Dropdown
-                                    id="userSelect"
-                                    value={selectedUserId}
-                                    options={userOptions}
-                                    onChange={(e) => setSelectedUserId(e.value)}
-                                    placeholder="Select a user"
-                                    className="w-full"
-                                    filter
-                                    emptyMessage="All users already have submissions"
-                                />
-                            </div>
-                        )}
+                        <div className="field">
+                            <label htmlFor="userSelect" className="block mb-2 font-medium">Select User (Optional)</label>
+                            <Dropdown
+                                id="userSelect"
+                                value={selectedUserId}
+                                options={userOptions}
+                                onChange={(e) => setSelectedUserId(e.value)}
+                                placeholder="Select a user (or leave empty)"
+                                className="w-full"
+                                filter
+                                showClear
+                                emptyMessage="No users available"
+                            />
+                            {editingSubmission && (
+                                <small className="text-color-secondary">Change the user assigned to this bottle</small>
+                            )}
+                        </div>
 
                         <div className="field">
                             <label htmlFor="whiskey_name" className="block mb-2 font-medium">Whiskey Name *</label>
