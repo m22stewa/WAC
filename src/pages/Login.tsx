@@ -9,6 +9,7 @@ import { Message } from 'primereact/message'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { useAuth } from '../context'
 import { supabase } from '../lib/supabase'
+import wacIcon from '../wac-icon.png'
 
 type AuthMode = 'login' | 'signup'
 
@@ -114,8 +115,8 @@ export function Login() {
             <div className="flex align-items-center justify-content-center min-h-screen p-4">
                 <Card className="w-full" style={{ maxWidth: '450px' }}>
                     <div className="text-center mb-4">
-                        <span style={{ fontSize: '3rem' }}>🥃</span>
-                        <h1 className="text-primary mt-2">Whiskey Advent Calendar</h1>
+                        <img src={wacIcon} alt="WAC" style={{ height: '5rem', width: 'auto' }} />
+                        <h1 className="mt-2">Whiskey Advent Calendar</h1>
                     </div>
 
                     <Message severity="warn" text="Supabase is not configured yet." className="w-full mb-4" />
@@ -139,8 +140,8 @@ export function Login() {
         <div className="flex align-items-center justify-content-center min-h-screen p-4">
             <Card className="w-full" style={{ maxWidth: '420px' }}>
                 <div className="text-center mb-4">
-                    <span style={{ fontSize: '3rem' }}>🥃</span>
-                    <h1 className="text-primary mt-2">Whiskey Advent Calendar</h1>
+                    <img src={wacIcon} alt="WAC" style={{ height: '5rem', width: 'auto' }} />
+                    <h1 className="mt-2">Whiskey Advent Calendar</h1>
                     <p className="text-color-secondary">
                         {mode === 'login' ? 'Welcome back!' : 'Join the club'}
                     </p>
