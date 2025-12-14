@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { Profile, UserRole } from '../types'
@@ -25,61 +25,122 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [session, setSession] = useState<Session | null>(null)
     const [loading, setLoading] = useState(true)
     const isConfigured = isSupabaseConfigured()
+    
+    // Track ongoing profile fetch to prevent duplicates
+    const profileFetchPromise = useRef<Promise<Profile | null> | null>(null)
+    const lastFetchedUserId = useRef<string | null>(null)
 
     // Fetch or create user profile
     const fetchOrCreateProfile = async (authUser: User): Promise<Profile | null> => {
-        if (!isConfigured) return null
-
-        // Try to fetch existing profile
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', authUser.id)
-            .maybeSingle() // Use maybeSingle instead of single to avoid 406 error
-
-        if (error) {
-            console.error('Error fetching profile:', error)
+        if (!isConfigured) {
+            console.log('Supabase not configured, skipping profile fetch')
             return null
         }
 
-        // If profile exists, return it
-        if (data) {
-            console.log('Found existing profile:', data)
-            return data as Profile
+        // If we already have a fetch in progress for this user, return it
+        if (profileFetchPromise.current && lastFetchedUserId.current === authUser.id) {
+            console.log('🔄 Reusing existing profile fetch for user:', authUser.id)
+            return profileFetchPromise.current
         }
 
-        // Profile doesn't exist, create it
-        console.log('Creating new profile for user:', authUser.id)
-        const newProfile = {
-            id: authUser.id,
-            name: authUser.user_metadata?.name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-            email: authUser.email || '',
-            avatar_url: authUser.user_metadata?.avatar_url || null,
-            role: 'user' as UserRole
-        }
+        console.log('🔍 fetchOrCreateProfile called for user:', authUser.id)
+        lastFetchedUserId.current = authUser.id
 
-        const { data: createdProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert(newProfile)
-            .select()
-            .single()
+        // Create the fetch promise
+        const fetchPromise = (async () => {
+            // Wait a tick to ensure session is fully established
+            await new Promise(resolve => setTimeout(resolve, 100))
 
-        if (createError) {
-            console.error('Error creating profile:', createError)
-            // If it's a duplicate key error, try fetching again
-            if (createError.code === '23505') {
-                const { data: retryData } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', authUser.id)
-                    .maybeSingle()
-                return retryData as Profile | null
+            // Try to fetch existing profile with timeout
+            console.log('📋 Attempting to fetch existing profile...')
+            
+            const dataPromise = supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', authUser.id)
+                .maybeSingle() // Use maybeSingle instead of single to avoid 406 error
+
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Profile fetch timeout after 1 second')), 1000)
+            )
+
+            let data, error
+            try {
+                const result = await Promise.race([dataPromise, timeoutPromise]) as any
+                data = result.data
+                error = result.error
+            } catch (timeoutError: any) {
+                console.error('⏱️ Profile fetch timed out:', timeoutError.message)
+                console.error('   This usually means RLS policies are blocking the SELECT query')
+                console.error('   Check your Supabase RLS policies on the profiles table')
+                profileFetchPromise.current = null
+                return null
             }
-            return null
-        }
 
-        console.log('Created new profile:', createdProfile)
-        return createdProfile as Profile
+            if (error) {
+                console.error('❌ Error fetching profile:', error)
+                console.error('   Error code:', error.code)
+                console.error('   Error message:', error.message)
+                profileFetchPromise.current = null
+                return null
+            }
+
+            // If profile exists, return it
+            if (data) {
+                console.log('✅ Found existing profile:', data)
+                profileFetchPromise.current = null
+                return data as Profile
+            }
+
+            // Profile doesn't exist, create it
+            console.log('➕ No profile found, creating new profile for user:', authUser.id)
+            const newProfile = {
+                id: authUser.id,
+                name: authUser.user_metadata?.name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+                email: authUser.email || '',
+                avatar_url: authUser.user_metadata?.avatar_url || null,
+                role: 'user' as UserRole
+            }
+
+            const { data: createdProfile, error: createError } = await supabase
+                .from('profiles')
+                .insert(newProfile)
+                .select()
+                .single()
+
+            if (createError) {
+                console.error('❌ Error creating profile:', createError)
+                console.error('   Error code:', createError.code)
+                console.error('   Error details:', createError.details)
+                console.error('   Error hint:', createError.hint)
+                console.error('   Error message:', createError.message)
+                
+                // If it's a duplicate key error, try fetching again
+                if (createError.code === '23505') {
+                    console.log('🔄 Duplicate key error, retrying fetch...')
+                    const { data: retryData } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', authUser.id)
+                        .maybeSingle()
+                    
+                    if (retryData) {
+                        console.log('✅ Found profile on retry:', retryData)
+                        profileFetchPromise.current = null
+                        return retryData as Profile
+                    }
+                }
+                profileFetchPromise.current = null
+                return null
+            }
+
+            console.log('✅ Successfully created new profile:', createdProfile)
+            profileFetchPromise.current = null
+            return createdProfile as Profile
+        })()
+
+        profileFetchPromise.current = fetchPromise
+        return fetchPromise
     }
 
     // Initialize auth state
@@ -121,18 +182,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(session?.user ?? null)
 
                 if (session?.user) {
+                    // Don't set loading to false until profile fetch completes
                     try {
                         const profile = await fetchOrCreateProfile(session.user)
-                        if (mounted) setProfile(profile)
+                        if (mounted) {
+                            setProfile(profile)
+                            setLoading(false)
+                        }
                     } catch (error) {
                         console.error('Failed to fetch/create profile:', error)
-                        if (mounted) setProfile(null)
+                        if (mounted) {
+                            setProfile(null)
+                            setLoading(false)
+                        }
                     }
                 } else {
-                    setProfile(null)
+                    if (mounted) {
+                        setProfile(null)
+                        setLoading(false)
+                    }
                 }
-
-                if (mounted) setLoading(false)
             }
         )
 
