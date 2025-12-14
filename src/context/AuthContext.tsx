@@ -48,39 +48,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Create the fetch promise
         const fetchPromise = (async () => {
-            // Wait a tick to ensure session is fully established
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            // Try to fetch existing profile with timeout
+            // Try to fetch existing profile (no timeout - let it complete naturally)
             console.log('📋 Attempting to fetch existing profile...')
             
-            const dataPromise = supabase
+            const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', authUser.id)
                 .maybeSingle() // Use maybeSingle instead of single to avoid 406 error
 
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Profile fetch timeout after 1 second')), 1000)
-            )
-
-            let data, error
-            try {
-                const result = await Promise.race([dataPromise, timeoutPromise]) as any
-                data = result.data
-                error = result.error
-            } catch (timeoutError: any) {
-                console.error('⏱️ Profile fetch timed out:', timeoutError.message)
-                console.error('   This usually means RLS policies are blocking the SELECT query')
-                console.error('   Check your Supabase RLS policies on the profiles table')
-                profileFetchPromise.current = null
-                return null
-            }
-
             if (error) {
                 console.error('❌ Error fetching profile:', error)
                 console.error('   Error code:', error.code)
                 console.error('   Error message:', error.message)
+                // Profile fetch failed - this shouldn't happen with fixed RLS
+                // The trigger should have created the profile
+                // If profile doesn't exist, something is wrong - but don't try to create it here
+                // The database trigger will handle it
+                console.warn('⚠️ Profile not found - database trigger should have created it')
                 profileFetchPromise.current = null
                 return null
             }
@@ -92,51 +77,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return data as Profile
             }
 
-            // Profile doesn't exist, create it
-            console.log('➕ No profile found, creating new profile for user:', authUser.id)
-            const newProfile = {
-                id: authUser.id,
-                name: authUser.user_metadata?.name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-                email: authUser.email || '',
-                avatar_url: authUser.user_metadata?.avatar_url || null,
-                role: 'user' as UserRole
-            }
-
-            const { data: createdProfile, error: createError } = await supabase
+            // Profile doesn't exist - trigger should have created it
+            // This shouldn't happen, but if it does, wait a moment and try again
+            console.log('⏳ Profile not found, waiting for trigger to create it...')
+            await new Promise(resolve => setTimeout(resolve, 500))
+            
+            const { data: retryData } = await supabase
                 .from('profiles')
-                .insert(newProfile)
-                .select()
-                .single()
-
-            if (createError) {
-                console.error('❌ Error creating profile:', createError)
-                console.error('   Error code:', createError.code)
-                console.error('   Error details:', createError.details)
-                console.error('   Error hint:', createError.hint)
-                console.error('   Error message:', createError.message)
-                
-                // If it's a duplicate key error, try fetching again
-                if (createError.code === '23505') {
-                    console.log('🔄 Duplicate key error, retrying fetch...')
-                    const { data: retryData } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', authUser.id)
-                        .maybeSingle()
-                    
-                    if (retryData) {
-                        console.log('✅ Found profile on retry:', retryData)
-                        profileFetchPromise.current = null
-                        return retryData as Profile
-                    }
-                }
+                .select('*')
+                .eq('id', authUser.id)
+                .maybeSingle()
+            
+            if (retryData) {
+                console.log('✅ Found profile on retry:', retryData)
                 profileFetchPromise.current = null
-                return null
+                return retryData as Profile
             }
 
-            console.log('✅ Successfully created new profile:', createdProfile)
+            console.error('❌ Profile still not found after retry - trigger may have failed')
             profileFetchPromise.current = null
-            return createdProfile as Profile
+            return null
         })()
 
         profileFetchPromise.current = fetchPromise

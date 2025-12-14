@@ -21,7 +21,7 @@ export function Profile() {
     return (
         <AppLayout>
             <div className="max-w-3xl mx-auto">
-                <h1 className="mb-2">👤 Profile</h1>
+                <h1 className="mb-2">Profile</h1>
                 <p className="text-color-secondary mb-4">Manage your account settings</p>
 
                 <div className="grid">

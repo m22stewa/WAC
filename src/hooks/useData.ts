@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { Event, BottleSubmission, CalendarDay, Announcement, Profile, EventMembership, Comment, TastingEntry } from '../types'
+import { Event, BottleSubmission, CalendarDay, Announcement, Profile, EventMembership, Comment, TastingEntry, Settlement, UserRole } from '../types'
 
 // Hook for fetching events
 export function useEvents() {
@@ -166,7 +166,7 @@ export function useUsers() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    const updateUserRole = async (userId: string, role: 'user' | 'admin') => {
+    const updateUserRole = async (userId: string, role: UserRole) => {
         console.log('Updating user role:', userId, role)
         const { data, error } = await supabase.from('profiles').update({ role }).eq('id', userId).select().single()
         if (error) {
@@ -177,7 +177,27 @@ export function useUsers() {
         return data
     }
 
-    return { users, loading, error, fetchUsers, updateUserRole }
+    const updateWaitingListOrder = async (userOrders: { id: string; order: number }[]) => {
+        console.log('Updating waiting list order:', userOrders)
+        
+        // Update each user's waiting_list_order
+        const updates = userOrders.map(({ id, order }) =>
+            supabase.from('profiles').update({ waiting_list_order: order }).eq('id', id)
+        )
+        
+        const results = await Promise.all(updates)
+        const errors = results.filter(r => r.error)
+        
+        if (errors.length > 0) {
+            console.error('Error updating waiting list order:', errors)
+            throw new Error('Failed to update waiting list order')
+        }
+        
+        // Refetch to get updated data
+        await fetchUsers()
+    }
+
+    return { users, loading, error, fetchUsers, updateUserRole, updateWaitingListOrder }
 }
 
 // Hook for bottle submissions
@@ -196,7 +216,7 @@ export function useBottleSubmissions(eventId?: string) {
 
         const { data, error } = await supabase
             .from('bottle_submissions')
-            .select('*, profile:profiles(name, avatar_url)')
+            .select('*, profile:profiles(id, name, email, avatar_url)')
             .eq('event_id', eventId)
 
         if (error) {
@@ -525,4 +545,106 @@ export function useTastingEntry(calendarDayId?: string, userId?: string) {
 
     return { entry, loading, error, fetchEntry, saveEntry }
 }
+
+// Hook for fetching and managing settlements for an event
+export function useSettlements(eventId: string | undefined) {
+    const [settlements, setSettlements] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+
+    const fetchSettlements = async () => {
+        if (!eventId) {
+            setSettlements([])
+            setLoading(false)
+            return
+        }
+
+        setLoading(true)
+        setError(null)
+
+        const { data, error } = await supabase
+            .from('settlements')
+            .select('*, profile:profiles!settlements_user_id_fkey(id, name, email, avatar_url)')
+            .eq('event_id', eventId)
+            .order('profile(name)', { ascending: true })
+
+        if (error) {
+            console.error('Error fetching settlements:', error)
+            setError(error.message)
+        } else {
+            console.log('Fetched settlements:', data)
+            setSettlements(data || [])
+        }
+        setLoading(false)
+    }
+
+    useEffect(() => {
+        fetchSettlements()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [eventId])
+
+    const toggleSettlement = async (settlementId: string, currentStatus: boolean, userId: string) => {
+        const updates = {
+            has_settled: !currentStatus,
+            settled_at: !currentStatus ? new Date().toISOString() : null,
+            settled_by: !currentStatus ? userId : null,
+            updated_at: new Date().toISOString()
+        }
+
+        const { data, error } = await supabase
+            .from('settlements')
+            .update(updates)
+            .eq('id', settlementId)
+            .select('*, profile:profiles!settlements_user_id_fkey(id, name, email, avatar_url)')
+            .single()
+
+        if (error) {
+            console.error('Error updating settlement:', error)
+            throw error
+        }
+
+        setSettlements(prev => prev.map(s => s.id === settlementId ? data : s))
+        return data
+    }
+
+    const createOrUpdateSettlement = async (userId: string, hasSettled: boolean, currentUserId: string) => {
+        if (!eventId) return
+
+        // Check if settlement exists
+        const { data: existing } = await supabase
+            .from('settlements')
+            .select('*')
+            .eq('event_id', eventId)
+            .eq('user_id', userId)
+            .maybeSingle()
+
+        if (existing) {
+            return toggleSettlement(existing.id, existing.has_settled, currentUserId)
+        } else {
+            // Create new settlement record
+            const { data, error } = await supabase
+                .from('settlements')
+                .insert({
+                    event_id: eventId,
+                    user_id: userId,
+                    has_settled: hasSettled,
+                    settled_at: hasSettled ? new Date().toISOString() : null,
+                    settled_by: hasSettled ? currentUserId : null
+                })
+                .select('*, profile:profiles!settlements_user_id_fkey(id, name, email, avatar_url)')
+                .single()
+
+            if (error) {
+                console.error('Error creating settlement:', error)
+                throw error
+            }
+
+            setSettlements(prev => [...prev, data])
+            return data
+        }
+    }
+
+    return { settlements, loading, error, fetchSettlements, toggleSettlement, createOrUpdateSettlement }
+}
+
 

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { Card } from 'primereact/card'
 import { Button } from 'primereact/button'
 import { DataTable } from 'primereact/datatable'
@@ -15,16 +15,28 @@ import { Profile, UserRole } from '../../types'
 
 const roleOptions = [
     { label: 'Member', value: 'user' },
-    { label: 'Admin', value: 'admin' }
+    { label: 'Admin', value: 'admin' },
+    { label: 'Waiting List', value: 'waiting_list' }
 ]
 
 export function MemberManagement() {
-    const { users, loading, updateUserRole } = useUsers()
+    const { users, loading, updateUserRole, updateWaitingListOrder } = useUsers()
     const toast = useRef<Toast>(null)
 
     const [showRoleDialog, setShowRoleDialog] = useState(false)
     const [selectedUser, setSelectedUser] = useState<Profile | null>(null)
     const [newRole, setNewRole] = useState<UserRole>('user')
+
+    // Separate active users from waiting list
+    const activeUsers = useMemo(() => 
+        users.filter(u => u.role !== 'waiting_list').sort((a, b) => (a.name || '').localeCompare(b.name || '')),
+        [users]
+    )
+
+    const waitingListUsers = useMemo(() => 
+        users.filter(u => u.role === 'waiting_list').sort((a, b) => (a.waiting_list_order || 0) - (b.waiting_list_order || 0)),
+        [users]
+    )
 
     const openRoleDialog = (user: Profile) => {
         setSelectedUser(user)
@@ -37,10 +49,34 @@ export function MemberManagement() {
 
         try {
             await updateUserRole(selectedUser.id, newRole)
-            toast.current?.show({ severity: 'success', summary: 'Success', detail: `${selectedUser.name}'s role updated to ${newRole}` })
+            const roleLabel = roleOptions.find(r => r.value === newRole)?.label || newRole
+            toast.current?.show({ severity: 'success', summary: 'Success', detail: `${selectedUser.name}'s role updated to ${roleLabel}` })
             setShowRoleDialog(false)
         } catch (error) {
             toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update role' })
+        }
+    }
+
+    const moveWaitingListUser = async (user: Profile, direction: 'up' | 'down') => {
+        const currentIndex = waitingListUsers.findIndex(u => u.id === user.id)
+        if (currentIndex === -1) return
+        
+        if (direction === 'up' && currentIndex === 0) return
+        if (direction === 'down' && currentIndex === waitingListUsers.length - 1) return
+
+        const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+        const reordered = [...waitingListUsers]
+        const [movedUser] = reordered.splice(currentIndex, 1)
+        reordered.splice(newIndex, 0, movedUser)
+
+        // Update order for all affected users
+        const updates = reordered.map((u, idx) => ({ id: u.id, order: idx }))
+        
+        try {
+            await updateWaitingListOrder(updates)
+            toast.current?.show({ severity: 'success', summary: 'Success', detail: 'Waiting list order updated' })
+        } catch (error) {
+            toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update waiting list order' })
         }
     }
 
@@ -58,12 +94,15 @@ export function MemberManagement() {
         </div>
     )
 
-    const roleTemplate = (row: Profile) => (
-        <Tag
-            value={row.role === 'admin' ? 'Admin' : 'Member'}
-            severity={row.role === 'admin' ? 'warning' : 'info'}
-        />
-    )
+    const roleTemplate = (row: Profile) => {
+        const config = {
+            admin: { label: 'Admin', severity: 'warning' as const },
+            user: { label: 'Member', severity: 'info' as const },
+            waiting_list: { label: 'Waiting List', severity: 'secondary' as const }
+        }
+        const { label, severity } = config[row.role] || config.user
+        return <Tag value={label} severity={severity} />
+    }
 
     const joinedTemplate = (row: Profile) => {
         return new Date(row.created_at).toLocaleDateString('en-US', {
@@ -82,6 +121,41 @@ export function MemberManagement() {
         />
     )
 
+    const waitingListActionsTemplate = (row: Profile) => {
+        const currentIndex = waitingListUsers.findIndex(u => u.id === row.id)
+        const isFirst = currentIndex === 0
+        const isLast = currentIndex === waitingListUsers.length - 1
+
+        return (
+            <div className="flex gap-1">
+                <Button
+                    icon="pi pi-arrow-up"
+                    className="p-button-text p-button-sm"
+                    onClick={() => moveWaitingListUser(row, 'up')}
+                    disabled={isFirst}
+                    tooltip="Move Up"
+                />
+                <Button
+                    icon="pi pi-arrow-down"
+                    className="p-button-text p-button-sm"
+                    onClick={() => moveWaitingListUser(row, 'down')}
+                    disabled={isLast}
+                    tooltip="Move Down"
+                />
+                <Button
+                    icon="pi pi-user-edit"
+                    className="p-button-text p-button-sm"
+                    onClick={() => openRoleDialog(row)}
+                    tooltip="Change Role"
+                />
+            </div>
+        )
+    }
+
+    const positionTemplate = (row: Profile, options: any) => {
+        return <span className="font-bold">#{options.rowIndex + 1}</span>
+    }
+
     return (
         <AppLayout>
             <Toast ref={toast} />
@@ -93,15 +167,17 @@ export function MemberManagement() {
                     <p className="text-color-secondary m-0">View all users and manage their roles</p>
                 </div>
 
-                <Card>
+                {/* Active Members Table */}
+                <Card className="mb-4">
+                    <h3 className="mt-0 mb-3">Active Members</h3>
                     <DataTable
-                        value={users}
+                        value={activeUsers}
                         loading={loading}
                         stripedRows
                         responsiveLayout="scroll"
                         paginator
                         rows={10}
-                        emptyMessage="No users found."
+                        emptyMessage="No active members found."
                     >
                         <Column header="User" body={memberTemplate} sortField="name" sortable />
                         <Column field="role" header="Role" body={roleTemplate} sortable style={{ width: '150px' }} />
@@ -109,6 +185,25 @@ export function MemberManagement() {
                         <Column header="Actions" body={actionsTemplate} style={{ width: '100px' }} />
                     </DataTable>
                 </Card>
+
+                {/* Waiting List Table */}
+                {waitingListUsers.length > 0 && (
+                    <Card>
+                        <h3 className="mt-0 mb-3">Waiting List</h3>
+                        <DataTable
+                            value={waitingListUsers}
+                            loading={loading}
+                            stripedRows
+                            responsiveLayout="scroll"
+                            emptyMessage="No users on waiting list."
+                        >
+                            <Column header="#" body={positionTemplate} style={{ width: '60px' }} />
+                            <Column header="User" body={memberTemplate} />
+                            <Column field="created_at" header="Joined" body={joinedTemplate} style={{ width: '150px' }} />
+                            <Column header="Actions" body={waitingListActionsTemplate} style={{ width: '150px' }} />
+                        </DataTable>
+                    </Card>
+                )}
 
                 <Dialog
                     header="Change User Role"
@@ -144,6 +239,8 @@ export function MemberManagement() {
                                     <small className="text-color-secondary mt-2 block">
                                         {newRole === 'admin'
                                             ? 'Admins can manage events, announcements, users, and all content.'
+                                            : newRole === 'waiting_list'
+                                            ? 'Waiting list users cannot participate until promoted to Member.'
                                             : 'Members can view content, submit bottles, and add tasting notes.'}
                                     </small>
                                 </div>
@@ -165,3 +262,4 @@ export function MemberManagement() {
         </AppLayout>
     )
 }
+

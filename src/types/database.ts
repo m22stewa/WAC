@@ -1,6 +1,6 @@
 // Database entity types for the Whiskey Advent Calendar app
 
-export type UserRole = 'user' | 'admin'
+export type UserRole = 'user' | 'admin' | 'waiting_list'
 export type EventStatus = 'planned' | 'active' | 'completed'
 
 export interface Profile {
@@ -9,6 +9,7 @@ export interface Profile {
     email: string
     avatar_url: string | null
     role: UserRole
+    waiting_list_order?: number
     created_at: string
 }
 
@@ -99,6 +100,19 @@ export interface Announcement {
     profile?: Profile
 }
 
+export interface Settlement {
+    id: string
+    event_id: string
+    user_id: string
+    has_settled: boolean
+    settled_at: string | null
+    settled_by: string | null
+    created_at: string
+    updated_at: string
+    // Joined fields
+    profile?: Profile
+}
+
 // Form types for creating/updating entities
 export interface BottleSubmissionForm {
     whiskey_name: string
@@ -142,4 +156,6 @@ export interface SpendingSummary {
     amount_spent: number
     average_target: number
     balance: number // positive = owed money, negative = owes money
+    has_settled: boolean
+    settlement_id?: string
 }
