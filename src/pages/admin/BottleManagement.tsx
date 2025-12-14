@@ -58,7 +58,7 @@ export function BottleManagement() {
 
     const [showDialog, setShowDialog] = useState(false)
     const [editingSubmission, setEditingSubmission] = useState<BottleSubmission | null>(null)
-    const [selectedUserId, setSelectedUserId] = useState<string>('')
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
     const [formData, setFormData] = useState<BottleSubmissionForm>(emptyForm)
     const [saving, setSaving] = useState(false)
 
@@ -79,7 +79,7 @@ export function BottleManagement() {
 
     const resetForm = () => {
         setFormData(emptyForm)
-        setSelectedUserId('')
+        setSelectedUserId(null)
         setEditingSubmission(null)
     }
 
