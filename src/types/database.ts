@@ -49,6 +49,7 @@ export interface BottleSubmission {
     price: number | null
     purchase_url: string | null
     notes: string | null
+    image_url: string | null
     created_at: string
     // Joined fields
     profile?: Profile
@@ -124,6 +125,7 @@ export interface BottleSubmissionForm {
     price: number | null
     purchase_url: string
     notes: string
+    image_url?: string | null
 }
 
 export interface TastingEntryForm {

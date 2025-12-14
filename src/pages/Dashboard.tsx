@@ -127,12 +127,13 @@ export function Dashboard() {
                                 onClick={() => isRevealed && navigate(`/day/${day}`)}
                             >
                                 <div className="text-2xl font-bold">{day}</div>
-                                {isRevealed ? (
+                                {isToday ? (
+                                    <div className="text-xs text-primary mt-2 font-semibold">Today!</div>
+                                ) : isRevealed ? (
                                     <i className="pi pi-check-circle text-green-500 mt-2" />
                                 ) : (
                                     <i className="pi pi-lock text-color-secondary mt-2" />
                                 )}
-                                {isToday && <div className="text-xs text-primary mt-1">Today!</div>}
                             </Card>
                         </div>
                     ))}

@@ -4,7 +4,7 @@ import { Card } from 'primereact/card'
 import { Button } from 'primereact/button'
 import { InputText } from 'primereact/inputtext'
 import { Password } from 'primereact/password'
-import { Divider } from 'primereact/divider'
+// Divider removed since social providers are disabled
 import { Message } from 'primereact/message'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { useAuth } from '../context'
@@ -22,7 +22,7 @@ export function Login() {
     const [success, setSuccess] = useState<string | null>(null)
     const [resendingEmail, setResendingEmail] = useState(false)
 
-    const { user, loading, signInWithEmail, signUpWithEmail, signInWithProvider, isConfigured } = useAuth()
+    const { user, loading, signInWithEmail, signUpWithEmail, isConfigured } = useAuth()
     const navigate = useNavigate()
     const location = useLocation()
 
@@ -61,13 +61,7 @@ export function Login() {
         }
     }
 
-    const handleProviderAuth = async (provider: 'google' | 'apple' | 'facebook') => {
-        setError(null)
-        const { error } = await signInWithProvider(provider)
-        if (error) {
-            setError(error.message)
-        }
-    }
+
 
     const handleResendVerification = async () => {
         if (!email) {
@@ -225,30 +219,7 @@ export function Login() {
                     </div>
                 )}
 
-                <Divider align="center">
-                    <span className="text-color-secondary text-sm">or continue with</span>
-                </Divider>
 
-                <div className="flex gap-2 justify-content-center">
-                    <Button
-                        icon="pi pi-apple"
-                        label="Apple"
-                        className="p-button-outlined"
-                        onClick={() => handleProviderAuth('apple')}
-                    />
-                    <Button
-                        icon="pi pi-google"
-                        label="Google"
-                        className="p-button-outlined"
-                        onClick={() => handleProviderAuth('google')}
-                    />
-                    <Button
-                        icon="pi pi-facebook"
-                        label="Facebook"
-                        className="p-button-outlined"
-                        onClick={() => handleProviderAuth('facebook')}
-                    />
-                </div>
 
                 <div className="text-center mt-4 text-color-secondary">
                     {mode === 'login' ? (

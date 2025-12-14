@@ -9,10 +9,13 @@ import { Divider } from 'primereact/divider'
 import { Message } from 'primereact/message'
 import { Toast } from 'primereact/toast'
 import { ProgressSpinner } from 'primereact/progressspinner'
+import { FileUpload, FileUploadHandlerEvent } from 'primereact/fileupload'
+import { Image } from 'primereact/image'
 import { AppLayout } from '../components/layout'
 import { useAuth } from '../context'
 import { useCurrentEvent, useBottleSubmissions } from '../hooks'
 import { BottleSubmissionForm } from '../types'
+import { supabase } from '../lib/supabase'
 
 const CURRENT_YEAR = new Date().getFullYear()
 
@@ -44,6 +47,7 @@ export function MyBottle() {
     const { event, loading: eventLoading } = useCurrentEvent()
     const { submissions, createSubmission, updateSubmission, loading: submissionsLoading } = useBottleSubmissions(event?.id)
     const toast = useRef<Toast>(null)
+    const fileUploadRef = useRef<FileUpload>(null)
 
     const [bottle, setBottle] = useState<BottleSubmissionForm>({
         whiskey_name: '',
@@ -54,10 +58,12 @@ export function MyBottle() {
         volume: '',
         price: null,
         purchase_url: '',
-        notes: ''
+        notes: '',
+        image_url: null
     })
     const [isEditing, setIsEditing] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [uploading, setUploading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     // Find if user already has a submission for this event
@@ -75,11 +81,58 @@ export function MyBottle() {
                 volume: existingSubmission.volume || '',
                 price: existingSubmission.price,
                 purchase_url: existingSubmission.purchase_url || '',
-                notes: existingSubmission.notes || ''
+                notes: existingSubmission.notes || '',
+                image_url: existingSubmission.image_url || null
             })
             setIsEditing(false)
         }
     }, [existingSubmission])
+
+    const handleImageUpload = async (event: FileUploadHandlerEvent) => {
+        if (!user || !event.files || event.files.length === 0) return
+
+        const file = event.files[0]
+        setUploading(true)
+        setError(null)
+
+        try {
+            // Generate unique filename
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${user.id}/${Date.now()}.${fileExt}`
+
+            // Upload to Supabase Storage
+            const { data, error: uploadError } = await supabase.storage
+                .from('bottle-images')
+                .upload(fileName, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                })
+
+            if (uploadError) throw uploadError
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('bottle-images')
+                .getPublicUrl(data.path)
+
+            setBottle({ ...bottle, image_url: publicUrl })
+            toast.current?.show({ severity: 'success', summary: 'Success', detail: 'Image uploaded!' })
+            
+            // Clear the file upload component
+            if (fileUploadRef.current) {
+                fileUploadRef.current.clear()
+            }
+        } catch (err) {
+            console.error('Error uploading image:', err)
+            toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to upload image' })
+        } finally {
+            setUploading(false)
+        }
+    }
+
+    const handleRemoveImage = () => {
+        setBottle({ ...bottle, image_url: null })
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -289,6 +342,50 @@ export function MyBottle() {
                                         className="w-full"
                                         disabled={!isEditing}
                                     />
+                                </div>
+                            </div>
+
+                            <div className="col-12">
+                                <div className="field">
+                                    <label className="block mb-2 font-medium">Bottle Image (optional)</label>
+                                    
+                                    {bottle.image_url && (
+                                        <div className="mb-3">
+                                            <Image 
+                                                src={bottle.image_url} 
+                                                alt="Bottle preview" 
+                                                width="200" 
+                                                preview 
+                                            />
+                                            {isEditing && (
+                                                <Button
+                                                    type="button"
+                                                    icon="pi pi-times"
+                                                    className="p-button-rounded p-button-danger p-button-text ml-2"
+                                                    onClick={handleRemoveImage}
+                                                    tooltip="Remove image"
+                                                />
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {isEditing && !bottle.image_url && (
+                                        <FileUpload
+                                            ref={fileUploadRef}
+                                            mode="basic"
+                                            name="image"
+                                            accept="image/*"
+                                            maxFileSize={5000000}
+                                            customUpload
+                                            uploadHandler={handleImageUpload}
+                                            chooseLabel={uploading ? "Uploading..." : "Choose Image"}
+                                            disabled={uploading}
+                                            auto
+                                        />
+                                    )}
+                                    <small className="text-color-secondary block mt-2">
+                                        Max file size: 5MB. Supported formats: JPG, PNG, WebP
+                                    </small>
                                 </div>
                             </div>
                         </div>

@@ -12,7 +12,6 @@ interface AuthContextType {
     isConfigured: boolean
     signInWithEmail: (email: string, password: string) => Promise<{ error: AuthError | null }>
     signUpWithEmail: (email: string, password: string, name: string) => Promise<{ error: AuthError | null }>
-    signInWithProvider: (provider: 'google' | 'apple' | 'facebook') => Promise<{ error: AuthError | null }>
     signOut: () => Promise<void>
     updateProfile: (updates: Partial<Profile>) => Promise<{ error: Error | null }>
 }
@@ -26,81 +25,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true)
     const isConfigured = isSupabaseConfigured()
     
-    // Track ongoing profile fetch to prevent duplicates
-    const profileFetchPromise = useRef<Promise<Profile | null> | null>(null)
+    // Track last fetched user to prevent duplicate profile fetches
     const lastFetchedUserId = useRef<string | null>(null)
 
-    // Fetch or create user profile
-    const fetchOrCreateProfile = async (authUser: User): Promise<Profile | null> => {
+    // Fetch user profile - completely non-blocking
+    const fetchProfile = async (authUser: User): Promise<void> => {
         if (!isConfigured) {
             console.log('Supabase not configured, skipping profile fetch')
-            return null
+            return
         }
 
-        // If we already have a fetch in progress for this user, return it
-        if (profileFetchPromise.current && lastFetchedUserId.current === authUser.id) {
-            console.log('🔄 Reusing existing profile fetch for user:', authUser.id)
-            return profileFetchPromise.current
+        // Prevent duplicate fetches for same user
+        if (lastFetchedUserId.current === authUser.id) {
+            console.log('Profile already fetched for user:', authUser.id)
+            return
         }
 
-        console.log('🔍 fetchOrCreateProfile called for user:', authUser.id)
         lastFetchedUserId.current = authUser.id
+        console.log('Fetching profile for user:', authUser.id)
 
-        // Create the fetch promise
-        const fetchPromise = (async () => {
-            // Try to fetch existing profile (no timeout - let it complete naturally)
-            console.log('📋 Attempting to fetch existing profile...')
-            
+        try {
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', authUser.id)
-                .maybeSingle() // Use maybeSingle instead of single to avoid 406 error
+                .single()
 
             if (error) {
-                console.error('❌ Error fetching profile:', error)
-                console.error('   Error code:', error.code)
-                console.error('   Error message:', error.message)
-                // Profile fetch failed - this shouldn't happen with fixed RLS
-                // The trigger should have created the profile
-                // If profile doesn't exist, something is wrong - but don't try to create it here
-                // The database trigger will handle it
-                console.warn('⚠️ Profile not found - database trigger should have created it')
-                profileFetchPromise.current = null
-                return null
+                console.error('Error fetching profile:', error.message)
+                // Profile will remain null - app will still function
+                return
             }
 
-            // If profile exists, return it
             if (data) {
-                console.log('✅ Found existing profile:', data)
-                profileFetchPromise.current = null
-                return data as Profile
+                console.log('Profile loaded successfully')
+                setProfile(data as Profile)
             }
-
-            // Profile doesn't exist - trigger should have created it
-            // This shouldn't happen, but if it does, wait a moment and try again
-            console.log('⏳ Profile not found, waiting for trigger to create it...')
-            await new Promise(resolve => setTimeout(resolve, 500))
-            
-            const { data: retryData } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', authUser.id)
-                .maybeSingle()
-            
-            if (retryData) {
-                console.log('✅ Found profile on retry:', retryData)
-                profileFetchPromise.current = null
-                return retryData as Profile
-            }
-
-            console.error('❌ Profile still not found after retry - trigger may have failed')
-            profileFetchPromise.current = null
-            return null
-        })()
-
-        profileFetchPromise.current = fetchPromise
-        return fetchPromise
+        } catch (err) {
+            console.error('Unexpected error fetching profile:', err)
+            // Profile will remain null - app will still function
+        }
     }
 
     // Initialize auth state
@@ -112,29 +76,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         let mounted = true
 
-        // Get initial session
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
+        // Get initial session - this should be very fast
+        supabase.auth.getSession().then(({ data: { session } }) => {
             if (!mounted) return
 
             setSession(session)
             setUser(session?.user ?? null)
+            setLoading(false) // Stop loading immediately after auth check
 
+            // Fetch profile in background - completely non-blocking
             if (session?.user) {
-                try {
-                    const profile = await fetchOrCreateProfile(session.user)
-                    if (mounted) setProfile(profile)
-                } catch (error) {
-                    console.error('Failed to fetch/create profile:', error)
-                    if (mounted) setProfile(null)
-                }
+                fetchProfile(session.user)
             }
-
-            if (mounted) setLoading(false)
         })
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
+            (event, session) => {
                 if (!mounted) return
 
                 console.log('Auth state changed:', event)
@@ -142,25 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(session?.user ?? null)
 
                 if (session?.user) {
-                    // Don't set loading to false until profile fetch completes
-                    try {
-                        const profile = await fetchOrCreateProfile(session.user)
-                        if (mounted) {
-                            setProfile(profile)
-                            setLoading(false)
-                        }
-                    } catch (error) {
-                        console.error('Failed to fetch/create profile:', error)
-                        if (mounted) {
-                            setProfile(null)
-                            setLoading(false)
-                        }
-                    }
+                    // Fetch profile in background - non-blocking
+                    fetchProfile(session.user)
                 } else {
-                    if (mounted) {
-                        setProfile(null)
-                        setLoading(false)
-                    }
+                    setProfile(null)
+                    lastFetchedUserId.current = null
                 }
             }
         )
@@ -193,16 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error }
     }
 
-    // Sign in with OAuth provider
-    const signInWithProvider = async (provider: 'google' | 'apple' | 'facebook') => {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider,
-            options: {
-                redirectTo: `${window.location.origin}/auth/callback`
-            }
-        })
-        return { error }
-    }
+
 
     // Sign out
     const signOut = async () => {
@@ -239,7 +174,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isConfigured,
         signInWithEmail,
         signUpWithEmail,
-        signInWithProvider,
         signOut,
         updateProfile
     }

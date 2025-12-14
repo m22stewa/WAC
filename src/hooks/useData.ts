@@ -546,6 +546,50 @@ export function useTastingEntry(calendarDayId?: string, userId?: string) {
     return { entry, loading, error, fetchEntry, saveEntry }
 }
 
+// Hook for fetching all tasting entries for a calendar day (to calculate average rating)
+export function useTastingEntries(calendarDayId?: string) {
+    const [entries, setEntries] = useState<TastingEntry[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+
+    const fetchEntries = async () => {
+        if (!calendarDayId) {
+            setLoading(false)
+            return
+        }
+        setLoading(true)
+        setError(null)
+
+        const { data, error } = await supabase
+            .from('tasting_entries')
+            .select('*, profile:profiles!tasting_entries_user_id_fkey(id, name, email, avatar_url)')
+            .eq('calendar_day_id', calendarDayId)
+
+        if (error) {
+            console.error('Error fetching tasting entries:', error)
+            setError(error.message)
+        } else {
+            console.log('Fetched tasting entries:', data)
+        }
+
+        setEntries(data || [])
+        setLoading(false)
+    }
+
+    useEffect(() => {
+        fetchEntries()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [calendarDayId])
+
+    // Calculate average rating
+    const ratingsOnly = entries.filter(e => e.rating !== null).map(e => e.rating as number)
+    const averageRating = ratingsOnly.length > 0 
+        ? ratingsOnly.reduce((sum, r) => sum + r, 0) / ratingsOnly.length 
+        : null
+
+    return { entries, loading, error, fetchEntries, averageRating, ratingCount: ratingsOnly.length }
+}
+
 // Hook for fetching and managing settlements for an event
 export function useSettlements(eventId: string | undefined) {
     const [settlements, setSettlements] = useState<Array<Settlement & { profile?: Profile }>>([])

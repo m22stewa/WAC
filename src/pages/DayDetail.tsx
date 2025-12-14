@@ -9,9 +9,10 @@ import { Avatar } from 'primereact/avatar'
 import { Divider } from 'primereact/divider'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { Toast } from 'primereact/toast'
+import { Image } from 'primereact/image'
 import { AppLayout } from '../components/layout'
 import { useAuth } from '../context'
-import { useCurrentEvent, useCalendarDays, useComments, useTastingEntry } from '../hooks'
+import { useCurrentEvent, useCalendarDays, useComments, useTastingEntry, useTastingEntries } from '../hooks'
 
 export function DayDetail() {
     const { dayNumber } = useParams()
@@ -28,6 +29,7 @@ export function DayDetail() {
     // Hooks for comments and tasting entry
     const { comments, loading: commentsLoading, createComment } = useComments(day?.id)
     const { entry, saveEntry } = useTastingEntry(day?.id, user?.id)
+    const { averageRating, ratingCount } = useTastingEntries(day?.id)
 
     // Local state for form
     const [rating, setRating] = useState<number | undefined>(undefined)
@@ -149,13 +151,34 @@ export function DayDetail() {
                 <div className="mb-4">
                     <span className="bg-primary text-white px-3 py-1 border-round text-sm font-bold">Day {dayNumber}</span>
                     <h1 className="mt-2 mb-1">{bottle.whiskey_name}</h1>
-                    <p className="text-color-secondary mt-0">Submitted by {bottle.profile?.name || 'Unknown'}</p>
+                    <div className="flex align-items-center gap-3">
+                        <p className="text-color-secondary mt-0 mb-0">Submitted by {bottle.profile?.name || 'Unknown'}</p>
+                        {averageRating !== null && (
+                            <div className="flex align-items-center gap-2">
+                                <Rating value={Math.round(averageRating)} readOnly cancel={false} stars={10} />
+                                <span className="text-color-secondary">
+                                    {averageRating.toFixed(1)} ({ratingCount} rating{ratingCount !== 1 ? 's' : ''})
+                                </span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="grid">
                     <div className="col-12 lg:col-8">
                         {/* Whiskey Details */}
                         <Card className="mb-4">
+                            {bottle.image_url && (
+                                <div className="mb-4 text-center">
+                                    <Image 
+                                        src={bottle.image_url} 
+                                        alt={bottle.whiskey_name}
+                                        width="300"
+                                        preview
+                                        className="border-round shadow-2"
+                                    />
+                                </div>
+                            )}
                             <div className="flex align-items-center gap-4 mb-3">
                                 <div className="flex flex-wrap gap-3">
                                     {bottle.country && <span><i className="pi pi-map-marker mr-1" />{bottle.country}</span>}
@@ -226,7 +249,8 @@ export function DayDetail() {
                     <div className="col-12 lg:col-4">
                         {/* Tasting Notes Form */}
                         <Card>
-                            <h3 className="mt-0">Your Tasting Notes</h3>
+                            <h3 className="mt-0">Your Private Tasting Notes</h3>
+                            <p className="text-color-secondary text-sm mt-0 mb-3">Only you can see your notes</p>
 
                             <div className="field mb-3">
                                 <label className="block mb-2 font-medium">Your Rating</label>
@@ -236,18 +260,20 @@ export function DayDetail() {
                                     cancel={false}
                                     stars={10}
                                 />
+                                <small className="text-color-secondary block mt-1">Shared as part of average rating</small>
                             </div>
 
                             <div className="field mb-3">
-                                <label htmlFor="tasting-notes" className="block mb-2 font-medium">Notes</label>
+                                <label htmlFor="tasting-notes" className="block mb-2 font-medium">Private Notes</label>
                                 <InputTextarea
                                     id="tasting-notes"
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
-                                    placeholder="What flavors did you notice?"
+                                    placeholder="What flavors did you notice? (private)"
                                     rows={4}
                                     className="w-full"
                                 />
+                                <small className="text-color-secondary block mt-1">Only visible to you</small>
                             </div>
 
                             <div className="field mb-4">

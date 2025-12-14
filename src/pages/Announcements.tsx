@@ -1,10 +1,8 @@
 import { Card } from 'primereact/card'
-import { Timeline } from 'primereact/timeline'
 import { Avatar } from 'primereact/avatar'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { AppLayout } from '../components/layout'
 import { useAnnouncements, useCurrentEvent } from '../hooks'
-import { Announcement } from '../types'
 
 export function Announcements() {
     const { event, loading: eventLoading } = useCurrentEvent()
@@ -16,29 +14,11 @@ export function Announcements() {
         return new Date(dateStr).toLocaleDateString('en-US', {
             month: 'long',
             day: 'numeric',
-            year: 'numeric'
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
         })
     }
-
-    const customMarker = () => (
-        <span className="flex align-items-center justify-content-center bg-primary border-circle" style={{ width: '2rem', height: '2rem' }}>
-            <i className="pi pi-megaphone text-white text-sm" />
-        </span>
-    )
-
-    const customContent = (item: Announcement) => (
-        <Card className="mb-3">
-            <div className="flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                <h3 className="m-0">{item.title}</h3>
-                <span className="text-color-secondary text-sm">{formatDate(item.created_at)}</span>
-            </div>
-            <p className="line-height-3 text-color-secondary mb-3">{item.body}</p>
-            <div className="flex align-items-center gap-2 pt-2 border-top-1 surface-border">
-                <Avatar icon="pi pi-user" shape="circle" size="normal" />
-                <span className="text-color-secondary text-sm">{(item as any).profile?.name || 'Admin'}</span>
-            </div>
-        </Card>
-    )
 
     if (loading) {
         return (
@@ -63,7 +43,23 @@ export function Announcements() {
                         <p className="text-color-secondary">Check back later for updates from the organizers.</p>
                     </Card>
                 ) : (
-                    <Timeline value={announcements} content={customContent} marker={customMarker} />
+                    <div className="flex flex-column gap-4">
+                        {announcements.map((announcement) => (
+                            <Card key={announcement.id}>
+                                <div className="flex align-items-start gap-3 mb-3">
+                                    <Avatar icon="pi pi-user" shape="circle" size="large" />
+                                    <div className="flex-1">
+                                        <div className="flex justify-content-between align-items-start flex-wrap gap-2">
+                                            <span className="font-semibold">{(announcement as any).profile?.name || 'Admin'}</span>
+                                            <span className="text-color-secondary text-sm">{formatDate(announcement.created_at)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h2 className="mt-0 mb-3">{announcement.title}</h2>
+                                <p className="line-height-3 text-color-secondary m-0" style={{ whiteSpace: 'pre-wrap' }}>{announcement.body}</p>
+                            </Card>
+                        ))}
+                    </div>
                 )}
             </div>
         </AppLayout>
