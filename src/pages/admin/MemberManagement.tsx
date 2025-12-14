@@ -152,7 +152,7 @@ export function MemberManagement() {
         )
     }
 
-    const positionTemplate = (row: Profile, options: any) => {
+    const positionTemplate = (_row: Profile, options: any) => {
         return <span className="font-bold">#{options.rowIndex + 1}</span>
     }
 

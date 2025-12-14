@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { Event, BottleSubmission, CalendarDay, Announcement, Profile, EventMembership, Comment, TastingEntry, Settlement, UserRole } from '../types'
+import type { Event, BottleSubmission, CalendarDay, Announcement, Profile, EventMembership, Comment, TastingEntry, Settlement, UserRole } from '../types'
 
 // Hook for fetching events
 export function useEvents() {
@@ -548,7 +548,7 @@ export function useTastingEntry(calendarDayId?: string, userId?: string) {
 
 // Hook for fetching and managing settlements for an event
 export function useSettlements(eventId: string | undefined) {
-    const [settlements, setSettlements] = useState<any[]>([])
+    const [settlements, setSettlements] = useState<Array<Settlement & { profile?: Profile }>>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 

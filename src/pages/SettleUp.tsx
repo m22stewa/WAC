@@ -10,7 +10,7 @@ import { Message } from 'primereact/message'
 import { AppLayout } from '../components/layout'
 import { useEvents, useEventMemberships, useBottleSubmissions, useSettlements } from '../hooks/useData'
 import { useAuth } from '../context'
-import { SpendingSummary } from '../types'
+import type { SpendingSummary, Profile } from '../types'
 
 export function SettleUp() {
     const { events, loading: eventsLoading } = useEvents()
