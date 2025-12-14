@@ -38,7 +38,7 @@ export interface EventMembership {
 export interface BottleSubmission {
     id: string
     event_id: string
-    user_id: string
+    user_id: string | null
     whiskey_name: string
     distillery: string | null
     country: string | null
