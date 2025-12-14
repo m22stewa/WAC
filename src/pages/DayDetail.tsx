@@ -187,6 +187,16 @@ export function DayDetail() {
                                     {bottle.price && <span className="text-primary font-bold">${bottle.price}</span>}
                                 </div>
                             </div>
+                            {bottle.purchase_url && (
+                                <div className="mb-3">
+                                    <Button 
+                                        label="Purchase Online" 
+                                        icon="pi pi-shopping-cart" 
+                                        className="p-button-outlined"
+                                        onClick={() => window.open(bottle.purchase_url, '_blank')}
+                                    />
+                                </div>
+                            )}
                             {bottle.notes && (
                                 <>
                                     <Divider />

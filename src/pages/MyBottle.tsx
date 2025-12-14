@@ -26,7 +26,8 @@ const countryOptions = [
     { label: 'Japan', value: 'Japan' },
     { label: 'Canada', value: 'Canada' },
     { label: 'Taiwan', value: 'Taiwan' },
-    { label: 'India', value: 'India' },
+    { label: 'Italy', value: 'Italy' },
+    { label: 'France', value: 'France' },
     { label: 'Other', value: 'Other' }
 ]
 
