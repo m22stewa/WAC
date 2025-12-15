@@ -1,38 +1,87 @@
 # WAC — Whiskey Advent Calendar
 
-A lightweight Progressive Web App to manage a private whiskey Advent calendar exchange among friends.
+A Progressive Web App for managing a private whiskey Advent calendar exchange among friends. Built with React, TypeScript, Vite, and Supabase.
 
-- Simple member management and role-based admin tools
-- Submit and reveal bottles across a 24-day Advent calendar
-- Comments, notes, and settle-up tracking
+## Features
 
-Repository: https://github.com/m22stewa/WAC
+### For Members
+- **Bottle Submissions** - Submit your whiskey bottle with details, images, and purchase links
+- **Daily Reveals** - Discover a new bottle each day of Advent (December 1-24)
+- **Tasting Notes** - Rate bottles (1-10), add private tasting notes, mark bottles you'd buy again
+- **Comments** - Discuss each day's bottle with other members
+- **Settle Up** - Track costs and settlement status for the year
+- **Announcements** - Stay updated with group news and updates
+- **History** - Browse past years' calendars and bottles
 
-Quick Start
+### For Admins
+- **Event Management** - Create and manage calendar years
+- **Day Assignment** - Assign bottles to specific calendar days
+- **Member Management** - Manage users, roles, and waiting list with drag-drop ordering
+- **Bottle Management** - View all submissions with placement info, edit any bottle
+- **Announcements** - Post updates to all members
+- **Data Export** - Export complete calendar data to CSV (members, bottles, settlements, ratings, comments)
 
-1. Install dependencies:
+### Design
+- **Custom Branding** - WAC icon and Poppins typography throughout
+- **Responsive** - Works on desktop, tablet, and mobile
+- **Theme Toggle** - Light and dark mode support
+- **PWA Ready** - Installable as a native app
 
+## Quick Start
+
+1. **Install dependencies:**
 ```bash
 npm install
 ```
 
-2. Create a local environment file and configure Supabase credentials based on `.env.example`:
-
+2. **Configure Supabase:**
+Create `.env.local` based on `.env.example`:
 ```bash
 cp .env.example .env.local
 ```
+Add your Supabase URL and anon key.
 
-3. Start development server:
+3. **Run migrations:**
+Apply all migrations in `supabase/migrations/` to your Supabase database in order (001-013).
 
+4. **Start development:**
 ```bash
 npm run dev
 ```
 
-Contributing
+5. **Build for production:**
+```bash
+npm run build
+```
 
-- This repo uses React + TypeScript + Vite on the frontend with Supabase for backend services.
-- Follow the code style and linting rules in `package.json`.
+## Tech Stack
 
-License
+- **Frontend:** React 18, TypeScript, Vite
+- **UI Library:** PrimeReact with custom Poppins font
+- **Backend:** Supabase (PostgreSQL, Auth, Storage, RLS)
+- **Deployment:** Vercel
+- **CI/CD:** GitHub Actions
 
-- MIT
+## Database Schema
+
+- `profiles` - User accounts and roles (admin, user, waiting_list)
+- `events` - Calendar years
+- `event_memberships` - User participation in events
+- `bottle_submissions` - Whiskey bottle details with images
+- `calendar_days` - 24-day calendar with bottle assignments
+- `tasting_entries` - User ratings and notes
+- `comments` - Daily discussions
+- `settlements` - Cost tracking per user per year
+- `announcements` - Group updates
+
+## Contributing
+
+Follow the existing code style and linting rules. All TypeScript errors must be resolved before merging.
+
+## License
+
+MIT
+
+## Repository
+
+https://github.com/m22stewa/WAC

@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import { Navbar } from './Navbar'
 import { Toast } from 'primereact/toast'
 import { useRef } from 'react'
+import wacIcon from '../../wac-icon.png'
 
 interface AppLayoutProps {
     children: ReactNode
@@ -22,7 +23,7 @@ export function AppLayout({ children, showNavbar = true }: AppLayoutProps) {
             </main>
 
             <footer className="p-4 text-center text-color-secondary border-top-1 surface-border mt-4">
-                <p className="m-0">Whiskey Advent Calendar</p>
+                <img src={wacIcon} alt="WAC" style={{ height: '2rem', width: 'auto', opacity: 0.6 }} />
             </footer>
         </div>
     )

@@ -11,7 +11,7 @@ import { InputTextarea } from 'primereact/inputtextarea'
 import { Toast } from 'primereact/toast'
 import { Tag } from 'primereact/tag'
 import { AppLayout } from '../../components/layout'
-import { useEvents, useBottleSubmissions, useUsers } from '../../hooks'
+import { useEvents, useBottleSubmissions, useUsers, useCalendarDays } from '../../hooks'
 import { BottleSubmission, BottleSubmissionForm, Profile } from '../../types'
 
 const countryOptions = [
@@ -54,6 +54,7 @@ export function BottleManagement() {
     const { users } = useUsers()
     const [selectedEventId, setSelectedEventId] = useState<string | undefined>(undefined)
     const { submissions, loading, createSubmission, updateSubmission } = useBottleSubmissions(selectedEventId)
+    const { days } = useCalendarDays(selectedEventId)
     const toast = useRef<Toast>(null)
 
     const [showDialog, setShowDialog] = useState(false)
@@ -159,6 +160,16 @@ export function BottleManagement() {
         </div>
     )
 
+    const placementTemplate = (row: BottleSubmission) => {
+        const assignedDay = days.find(d => d.bottle_submission_id === row.id)
+        const selectedEvent = events.find(e => e.id === selectedEventId)
+        
+        if (assignedDay && selectedEvent) {
+            return <div className="font-medium">{selectedEvent.year} - Day {assignedDay.day_number}</div>
+        }
+        return <div className="text-color-secondary text-sm">Not assigned</div>
+    }
+
     const detailsTemplate = (row: BottleSubmission) => (
         <div className="flex flex-wrap gap-2">
             {row.country && <Tag value={row.country} severity="info" />}
@@ -222,6 +233,7 @@ export function BottleManagement() {
                     >
                         <Column header="Member" body={userTemplate} sortable style={{ width: '200px' }} />
                         <Column header="Whiskey" body={bottleTemplate} sortable />
+                        <Column header="Placement" body={placementTemplate} sortable style={{ width: '150px' }} />
                         <Column header="Details" body={detailsTemplate} />
                         <Column header="Price" body={priceTemplate} style={{ width: '100px' }} />
                         <Column header="Actions" body={actionsTemplate} style={{ width: '80px' }} />

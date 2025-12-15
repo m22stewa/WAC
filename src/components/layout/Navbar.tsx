@@ -63,6 +63,10 @@ export function Navbar() {
                 {
                     label: 'Post Announcement',
                     command: () => navigate('/admin/announcements')
+                },
+                {
+                    label: 'Export Data',
+                    command: () => navigate('/admin/export')
                 }
             ]
         })

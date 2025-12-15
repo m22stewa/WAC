@@ -16,6 +16,7 @@ import { DayAssignment } from './pages/admin/DayAssignment'
 import { MemberManagement } from './pages/admin/MemberManagement'
 import { AnnouncementEditor } from './pages/admin/AnnouncementEditor'
 import { BottleManagement } from './pages/admin/BottleManagement'
+import { Export } from './pages/admin/Export'
 
 function App() {
     return (
@@ -97,6 +98,12 @@ function App() {
                     <Route path="/admin/bottles" element={
                         <ProtectedRoute requireAdmin>
                             <BottleManagement />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/admin/export" element={
+                        <ProtectedRoute requireAdmin>
+                            <Export />
                         </ProtectedRoute>
                     } />
                 </Routes>

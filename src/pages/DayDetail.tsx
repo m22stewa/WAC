@@ -151,6 +151,9 @@ export function DayDetail() {
             <div className="max-w-4xl mx-auto">
                 <div className="mb-4">
                     <span className="bg-primary text-white px-3 py-1 border-round text-sm font-bold">Day {dayNumber}</span>
+                    {bottle.distillery && (
+                        <p className="text-color-secondary text-lg font-bold mt-2 mb-1">{bottle.distillery}</p>
+                    )}
                     <h1 className="mt-2 mb-1">{bottle.whiskey_name}</h1>
                     <div className="flex align-items-center gap-3">
                         <p className="text-color-secondary mt-0 mb-0">Submitted by {bottle.profile?.name || 'Unknown'}</p>
