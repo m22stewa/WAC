@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useState, useRef, useEffect } from 'react'
 import { Card } from 'primereact/card'
 import { Button } from 'primereact/button'
@@ -16,7 +16,8 @@ import { useCurrentEvent, useCalendarDays, useComments, useTastingEntry, useTast
 
 export function DayDetail() {
     const { dayNumber } = useParams()
-    const { user } = useAuth()
+    const navigate = useNavigate()
+    const { user, isAdmin } = useAuth()
     const toast = useRef<Toast>(null)
 
     const { event, loading: eventLoading } = useCurrentEvent()
@@ -162,6 +163,16 @@ export function DayDetail() {
                             </div>
                         )}
                     </div>
+                    {isAdmin && (
+                        <div className="mt-3">
+                            <Button 
+                                label="Edit Bottle" 
+                                icon="pi pi-pencil" 
+                                className="p-button-sm p-button-outlined"
+                                onClick={() => navigate(`/my-bottle?edit=${bottle.id}`)}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid">

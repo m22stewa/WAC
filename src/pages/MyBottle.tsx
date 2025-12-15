@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Card } from 'primereact/card'
 import { InputText } from 'primereact/inputtext'
 import { InputNumber } from 'primereact/inputnumber'
@@ -44,7 +45,8 @@ const styleOptions = [
 ]
 
 export function MyBottle() {
-    const { user } = useAuth()
+    const [searchParams] = useSearchParams()
+    const { user, isAdmin } = useAuth()
     const { event, loading: eventLoading } = useCurrentEvent()
     const { submissions, createSubmission, updateSubmission, loading: submissionsLoading } = useBottleSubmissions(event?.id)
     const toast = useRef<Toast>(null)
@@ -67,8 +69,13 @@ export function MyBottle() {
     const [uploading, setUploading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    // Find if user already has a submission for this event
-    const existingSubmission = submissions.find(s => s.user_id === user?.id)
+    // Check if admin is editing a specific bottle
+    const editBottleId = searchParams.get('edit')
+    
+    // Find submission to edit - either the bottle specified by admin or user's own bottle
+    const existingSubmission = editBottleId && isAdmin
+        ? submissions.find(s => s.id === editBottleId)
+        : submissions.find(s => s.user_id === user?.id)
 
     // Load existing submission into form
     useEffect(() => {
